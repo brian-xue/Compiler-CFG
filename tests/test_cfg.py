@@ -114,5 +114,22 @@ class CFGTestCase(unittest.TestCase):
                     cfg = self.read_cfg(cfg_path)
                     self.compare_cfg(cfg, target_file)
 
+                else:
+                    outputdir = "/app/experiment_3/tests/ts_output"
+                    patched_testcase = patch(
+                        'sys.argv',
+                        ["", "run", "-f", "-p", "-d", "-l", "typescript", target_file, "-w", outputdir]
+                        # ["", "run", "-f", "-l", "python,java", target_file, "-w", config.TEST_CONFIG.config.output_dir]
+                    )(
+                        self.raw_test
+                    )
+                    patched_testcase()
+                    cfg_path = os.path.join(outputdir, "semantic/glang_bundle0.cfg")
+                    cfg = self.read_cfg(cfg_path)
+                    # self.compare_cfg(cfg, target_file)
+                    print("+current")
+                    pprint.pprint(cfg)
+
+
 if __name__ == '__main__':
     unittest.main()

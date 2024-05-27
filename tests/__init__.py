@@ -1,3 +1,4 @@
 __all__ = [
-	"python"
+	"python",
+	"typescript"
 ]
