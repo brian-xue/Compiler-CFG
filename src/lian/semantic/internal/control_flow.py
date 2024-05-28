@@ -115,13 +115,97 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
         return ([], -1)
 
     def analyze_dowhile_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
-        return ([], -1)
+        # self.link_parent_stmts_to_current_stmt(parent_stmts, current_stmt)
+        body_id = current_stmt.body
+        last_stmts_of_body = parent_stmts
+        last_stmts_of_body += [CFGNode(current_stmt, ControlFlowKind.LOOP_TRUE)]
+        current_id = current_stmt.stmt_id
+        if not util.isna(body_id):
+            body = self.read_block(current_block,body_id)
+            if len(body) != 0:
+                last_stmts_of_body = self.analyze_block(body,last_stmts_of_body,global_special_stmts)
+        
+        self.link_parent_stmts_to_current_stmt(last_stmts_of_body,current_stmt)
+        
+        last_stmts_of_else = [CFGNode(current_stmt, ControlFlowKind.LOOP_FALSE)]
+
+        boundary = self.boundary_of_multi_blocks(current_block, [current_id])
+
+        return (last_stmts_of_else, boundary)
 
     def analyze_for_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
-        return ([], -1)
+        self.link_parent_stmts_to_current_stmt(parent_stmts,current_stmt)
+        last_stmts_of_init_body = [[CFGNode(current_stmt)]]
+        init_body_id = current_stmt.init_body
+        if not util.isna(init_body_id):
+            init_body = self.read_block(current_block,init_body_id)
+            if len(init_body)!=0:
+                last_stmts_of_init_body = self.analyze_init_block(init_body,last_stmts_of_init_body,global_special_stmts)
+
+        condition_id = current_stmt.condition_prebody
+        last_stmts_of_condition_body = last_stmts_of_init_body
+        if not util.isna(condition_id):
+            condition_body = self.read_block(current_block,condition_id)
+            if len(condition_body)!=0:
+                last_stmts_of_condition_body = self.analyze_block(condition_body,last_stmts_of_condition_body,global_special_stmts)
+
+        last_stmts_of_body = [CFGNode(last_stmts_of_condition_body,ControlFlowKind.LOOP_TRUE)]
+        last_stmts_of_else = [CFGNode(last_stmts_of_condition_body,ControlFlowKind.LOOP_FALSE)]
+        body_id = current_stmt.body
+        if not util.isna(body_id):
+            body = self.read_block(current_block,body_id)
+            if len(body)!=0:
+                last_stmts_of_body = self.analyze_block(body,last_stmts_of_body,global_special_stmts)
+        
+        last_stmts_of_update = last_stmts_of_body
+        update_id = current_stmt.update_body
+        if not util.isna(update_id):
+            update_body = self.read_block(current_block,update_id)
+            if len(update_body)!= 0:
+                last_stmts_of_update = self.analyze_block(update_body,last_stmts_of_update,global_special_stmts)
+
+        self.link_parent_stmts_to_current_stmt(last_stmts_of_update,last_stmts_of_condition_body[0])
+
+        
+        boundary = self.boundary_of_multi_blocks(condition_body, [condition_id])
+        return (last_stmts_of_else, boundary)
 
     def analyze_try_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
-        return ([], -1)
+        self.link_parent_stmts_to_current_stmt(parent_stmts,current_stmt)
+        last_stmts_of_try_body = [[CFGNode(current_stmt)]]
+        try_body_id = current_stmt.try_body
+
+        if not util.isna(try_body_id):
+            try_body = self.read_block(current_block,try_body_id)
+            if len(try_body) !=0:
+                last_stmts_of_try_body = self.analyze_block(try_body,last_stmts_of_try_body,global_special_stmts)
+
+        last_stmts_of_catch_body = [CFGNode(last_stmts_of_try_body,ControlFlowKind.CATCH_TRUE)]
+
+        catch_body_id = current_stmt.catch_body
+
+        if not util.isna(catch_body_id):
+            catch_body = self.read_block(current_block,catch_body_id)
+            print(catch_body)
+            if len(catch_body)!=0:
+                last_stmts_of_catch_body = self.analyze_block(catch_body,last_stmts_of_catch_body,global_special_stmts)
+
+        last_stmts_of_final_body = [CFGNode(last_stmts_of_try_body,ControlFlowKind.CATCH_FINALLY)]
+        print(last_stmts_of_catch_body)
+        last_stmts_of_final_body += last_stmts_of_catch_body
+        last_stmts_of_final_body += [CFGNode(last_stmts_of_try_body,ControlFlowKind.CATCH_FALSE)]
+
+        final_body_id = current_stmt.finally_body
+        if not util.isna(final_body_id):
+            final_body = self.read_block(current_block,final_body_id)
+            if len(final_body)!=0:
+                last_stmts_of_final_body = self.analyze_block(final_body,last_stmts_of_final_body,global_special_stmts)
+
+        print("final:",last_stmts_of_final_body)
+        boundary = self.boundary_of_multi_blocks(current_block,[final_body_id])
+    
+        
+        return (last_stmts_of_final_body,boundary)
 
     def analyze_method_decl_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
         return ([], -1)

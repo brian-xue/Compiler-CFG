@@ -225,19 +225,23 @@
                                               'name': 'counter'}},
                            {'assign_stmt': {'target': 'counter',
                                             'operand': '100'}},
-                           {'assign_stmt': {'target': '%v0',
-                                            'operator': '<',
-                                            'operand': 'counter',
-                                            'operand2': 'max'}},
-                           {'if_stmt': {'condition': '%v0',
-                                        'then_body': [{'assign_stmt': {'target': '%v0',
-                                                                       'operand': 'counter'}},
-                                                      {'assign_stmt': {'target': 'counter',
+                           {'variable_decl': {'attr': [],
+                                              'data_type': '',
+                                              'name': 'i'}},
+                           {'assign_stmt': {'target': 'i', 'operand': '0'}},
+                           {'try_stmt': {'try_body': [{'assign_stmt': {'target': '%v0',
                                                                        'operator': '+',
-                                                                       'operand': 'counter',
+                                                                       'operand': 'i',
                                                                        'operand2': '1'}}],
-                                        'else_body': [{'assign_stmt': {'target': 'counter',
-                                                                       'operand': '1'}}]}}]}}]
+                                         'else_body': [],
+                                         'catch_body': [{'catch_clause': {'param': 'e',
+                                                                          'type': [],
+                                                                          'body': [{'assign_stmt': {'target': '%v0',
+                                                                                                    'operator': '-',
+                                                                                                    'operand': 'i',
+                                                                                                    'operand2': '1'}}]}}],
+                                         'finally_body': [{'finally_stmt': {'body': [{'assign_stmt': {'target': 'i',
+                                                                                                      'operand': '1'}}]}}]}}]}}]
 [{'operation': 'method_decl',
   'parent_stmt_id': 0,
   'stmt_id': 10,
@@ -271,40 +275,60 @@
   'stmt_id': 15,
   'target': 'counter',
   'operand': '100'},
- {'operation': 'assign_stmt',
+ {'operation': 'variable_decl',
   'parent_stmt_id': 11,
   'stmt_id': 16,
-  'target': '%v0',
-  'operator': '<',
-  'operand': 'counter',
-  'operand2': 'max'},
- {'operation': 'if_stmt',
+  'attr': None,
+  'data_type': '',
+  'name': 'i'},
+ {'operation': 'assign_stmt',
   'parent_stmt_id': 11,
   'stmt_id': 17,
-  'condition': '%v0',
-  'then_body': 18,
-  'else_body': 21},
- {'operation': 'block_start', 'stmt_id': 18, 'parent_stmt_id': 17},
+  'target': 'i',
+  'operand': '0'},
+ {'operation': 'try_stmt',
+  'parent_stmt_id': 11,
+  'stmt_id': 18,
+  'try_body': 19,
+  'else_body': None,
+  'catch_body': 21,
+  'finally_body': 25},
+ {'operation': 'block_start', 'stmt_id': 19, 'parent_stmt_id': 18},
  {'operation': 'assign_stmt',
-  'parent_stmt_id': 18,
-  'stmt_id': 19,
-  'target': '%v0',
-  'operand': 'counter'},
- {'operation': 'assign_stmt',
-  'parent_stmt_id': 18,
+  'parent_stmt_id': 19,
   'stmt_id': 20,
-  'target': 'counter',
+  'target': '%v0',
   'operator': '+',
-  'operand': 'counter',
+  'operand': 'i',
   'operand2': '1'},
- {'operation': 'block_end', 'stmt_id': 18, 'parent_stmt_id': 17},
- {'operation': 'block_start', 'stmt_id': 21, 'parent_stmt_id': 17},
- {'operation': 'assign_stmt',
+ {'operation': 'block_end', 'stmt_id': 19, 'parent_stmt_id': 18},
+ {'operation': 'block_start', 'stmt_id': 21, 'parent_stmt_id': 18},
+ {'operation': 'catch_clause',
   'parent_stmt_id': 21,
   'stmt_id': 22,
-  'target': 'counter',
+  'param': 'e',
+  'type': None,
+  'body': 23},
+ {'operation': 'block_start', 'stmt_id': 23, 'parent_stmt_id': 22},
+ {'operation': 'assign_stmt',
+  'parent_stmt_id': 23,
+  'stmt_id': 24,
+  'target': '%v0',
+  'operator': '-',
+  'operand': 'i',
+  'operand2': '1'},
+ {'operation': 'block_end', 'stmt_id': 23, 'parent_stmt_id': 22},
+ {'operation': 'block_end', 'stmt_id': 21, 'parent_stmt_id': 18},
+ {'operation': 'block_start', 'stmt_id': 25, 'parent_stmt_id': 18},
+ {'operation': 'finally_stmt', 'parent_stmt_id': 25, 'stmt_id': 26, 'body': 27},
+ {'operation': 'block_start', 'stmt_id': 27, 'parent_stmt_id': 26},
+ {'operation': 'assign_stmt',
+  'parent_stmt_id': 27,
+  'stmt_id': 28,
+  'target': 'i',
   'operand': '1'},
- {'operation': 'block_end', 'stmt_id': 21, 'parent_stmt_id': 17},
+ {'operation': 'block_end', 'stmt_id': 27, 'parent_stmt_id': 26},
+ {'operation': 'block_end', 'stmt_id': 25, 'parent_stmt_id': 18},
  {'operation': 'block_end', 'stmt_id': 11, 'parent_stmt_id': 10}]
 [DEBUG]: analysis_phase name: control_flow index:0
 [DEBUG]: _add_one_edge:12->13, weight=None
@@ -312,19 +336,44 @@
 [DEBUG]: _add_one_edge:14->15, weight=None
 [DEBUG]: _add_one_edge:15->16, weight=None
 [DEBUG]: _add_one_edge:16->17, weight=None
-[DEBUG]: _add_one_edge:17->19, weight=1
-[DEBUG]: _add_one_edge:19->20, weight=None
-[DEBUG]: _add_one_edge:17->22, weight=2
-[DEBUG]: _add_one_edge:20->-1, weight=None
-[DEBUG]: _add_one_edge:22->-1, weight=None
+[DEBUG]: _add_one_edge:17->18, weight=None
+[DEBUG]: _add_one_edge:18->20, weight=None
+dataframeagent(length=4, _schema={'operation': 0, 'parent_stmt_id': 1, 'stmt_id': 2, 'attr': 3, 'data_type': 4, 'name': 5, 'type_parameters': 6, 'parameters': 7, 'init': 8, 'body': 9, 'unit_id': 10, 'target': 11, 'operand': 12, 'try_body': 13, 'else_body': 14, 'catch_body': 15, 'finally_body': 16, 'operator': 17, 'operand2': 18, 'param': 19, 'type': 20}, _rows = [
+  ['catch_clause', 21, 22,       23.0, 1,         'e', nan]
+  ['block_start', 22, 23,        1,          nan]
+  ['assign_stmt', 23, 24,        1, '%v0', 'i',     '-', '1',  nan]
+  ['block_end', 22, 23,        1,          nan]
+])
+[DEBUG]: _add_one_edge:20->22, weight=9
+[DEBUG]: _add_one_edge:22->23, weight=None
+[DEBUG]: _add_one_edge:23->24, weight=None
+[DEBUG]: _add_one_edge:24->23, weight=None
+[Row(['block_end' 22 23 nan None None None nan nan nan 1 None None nan nan nan
+ nan None None None nan])]
+[DEBUG]: _add_one_edge:20->26, weight=11
+[DEBUG]: _add_one_edge:23->26, weight=None
+[DEBUG]: _add_one_edge:20->26, weight=10
+[DEBUG]: _add_one_edge:26->27, weight=None
+[DEBUG]: _add_one_edge:27->28, weight=None
+[DEBUG]: _add_one_edge:28->27, weight=None
+final: [Row(['block_end' 26 27 nan None None None nan nan nan 1 None None nan nan nan
+ nan None None None nan])]
+[DEBUG]: _add_one_edge:27->-1, weight=None
 +current
 [(12, 13, 0),
  (13, 14, 0),
  (14, 15, 0),
  (15, 16, 0),
  (16, 17, 0),
- (17, 19, 1),
- (17, 22, 2),
- (19, 20, 0),
- (20, -1, 0),
- (22, -1, 0)]
+ (17, 18, 0),
+ (18, 20, 0),
+ (20, 22, 9),
+ (20, 26, 0),
+ (22, 23, 0),
+ (26, 27, 0),
+ (23, 24, 0),
+ (23, 26, 0),
+ (24, 23, 0),
+ (27, 28, 0),
+ (27, -1, 0),
+ (28, 27, 0)]
