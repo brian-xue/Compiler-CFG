@@ -186,12 +186,15 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
 
         if not util.isna(catch_body_id):
             catch_body = self.read_block(current_block,catch_body_id)
-            print(catch_body)
             if len(catch_body)!=0:
-                last_stmts_of_catch_body = self.analyze_block(catch_body,last_stmts_of_catch_body,global_special_stmts)
+                catch_clause_body = catch_body.access(0)
+                catch_clause_body_id = catch_clause_body.body
+                if not util.isna(catch_clause_body_id):
+                    catch_clause_body = self.read_block(catch_body,catch_clause_body_id)
+                    if len(catch_clause_body) != 0:
+                        last_stmts_of_catch_body = self.analyze_block(catch_clause_body,last_stmts_of_catch_body,global_special_stmts)
 
         last_stmts_of_final_body = [CFGNode(last_stmts_of_try_body,ControlFlowKind.CATCH_FINALLY)]
-        print(last_stmts_of_catch_body)
         last_stmts_of_final_body += last_stmts_of_catch_body
         last_stmts_of_final_body += [CFGNode(last_stmts_of_try_body,ControlFlowKind.CATCH_FALSE)]
 
@@ -199,9 +202,12 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
         if not util.isna(final_body_id):
             final_body = self.read_block(current_block,final_body_id)
             if len(final_body)!=0:
-                last_stmts_of_final_body = self.analyze_block(final_body,last_stmts_of_final_body,global_special_stmts)
+                final_stmt_body_id = final_body.access(0).body
+                if not util.isna(final_stmt_body_id):
+                    final_stmt_body = self.read_block(final_body,final_stmt_body_id)
+                    if len(final_stmt_body)!=0:
+                        last_stmts_of_final_body = self.analyze_block(final_stmt_body,last_stmts_of_final_body,global_special_stmts)
 
-        print("final:",last_stmts_of_final_body)
         boundary = self.boundary_of_multi_blocks(current_block,[final_body_id])
     
         
