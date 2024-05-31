@@ -112,9 +112,43 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
         return self.cfg.graph
 
     def analyze_while_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
-        return ([], -1)
+        sp_stmt_stack_frame = len(global_special_stmts)
+        self.link_parent_stmts_to_current_stmt(parent_stmts, current_stmt)
+        true_start = [CFGNode(current_stmt, ControlFlowKind.LOOP_TRUE)]
+        current_id = current_stmt.stmt_id
+        body_id = current_stmt.body
+        if not util.isna(body_id):
+            body = self.read_block(current_block,body_id)
+            if len(body) != 0:
+                last_stmts_of_body = self.analyze_block(body,true_start,global_special_stmts)
+        breaks, continues = self.find_breakcontinue(global_special_stmts, sp_stmt_stack_frame)
+        self.link_parent_stmts_to_current_stmt(last_stmts_of_body + continues, current_stmt)
+        last_stmts_of_else = [CFGNode(current_stmt, ControlFlowKind.LOOP_FALSE)]
+        boundary = boundary = self.boundary_of_multi_blocks(current_block, [current_id,body_id])
+        return (last_stmts_of_else + breaks, boundary)
 
+
+    
+    # Removes all break statements and continue statements from global_special_stmts[stack_frame:] and return them in lists
+    def find_breakcontinue(self, global_special_stmts, stack_frame):
+        breaks = []
+        continues = []
+        if stack_frame > len(global_special_stmts):
+            raise ValueError("global_special_stmts has less than stack_frame elements")
+        for x in global_special_stmts[stack_frame:]:
+            if x[0] == "break":
+                breaks.append(x[1])
+            elif x[0] == "continue":
+                continues.append(x[1])
+            else:
+                raise ValueError("global_special_stmts[0] should be break or continue")
+        # ============
+        del global_special_stmts[stack_frame:]
+        return breaks, continues
+    
     def analyze_dowhile_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
+       # for break and continue
+        sp_stmt_stack_frame = len(global_special_stmts)
         # self.link_parent_stmts_to_current_stmt(parent_stmts, current_stmt)
         body_id = current_stmt.body
         last_stmts_of_body = parent_stmts
@@ -124,16 +158,19 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
             body = self.read_block(current_block,body_id)
             if len(body) != 0:
                 last_stmts_of_body = self.analyze_block(body,last_stmts_of_body,global_special_stmts)
-        
-        self.link_parent_stmts_to_current_stmt(last_stmts_of_body,current_stmt)
+
+        breaks, continues = self.find_breakcontinue(global_special_stmts, sp_stmt_stack_frame)
+        self.link_parent_stmts_to_current_stmt(last_stmts_of_body + continues, current_stmt)
         
         last_stmts_of_else = [CFGNode(current_stmt, ControlFlowKind.LOOP_FALSE)]
 
-        boundary = self.boundary_of_multi_blocks(current_block, [current_id])
-
-        return (last_stmts_of_else, boundary)
+        boundary = self.boundary_of_multi_blocks(current_block, [current_id,body_id])
+        return (last_stmts_of_else + breaks, boundary)
 
     def analyze_for_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
+        # for break and continue
+        sp_stmt_stack_frame = len(global_special_stmts)
+
         self.link_parent_stmts_to_current_stmt(parent_stmts,current_stmt)
         last_stmts_of_init_body = [[CFGNode(current_stmt)]]
         init_body_id = current_stmt.init_body
@@ -157,7 +194,8 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
             if len(body)!=0:
                 last_stmts_of_body = self.analyze_block(body,last_stmts_of_body,global_special_stmts)
         
-        last_stmts_of_update = last_stmts_of_body
+        breaks, continues = self.find_breakcontinue(global_special_stmts, sp_stmt_stack_frame)
+        last_stmts_of_update = last_stmts_of_body + continues
         update_id = current_stmt.update_body
         if not util.isna(update_id):
             update_body = self.read_block(current_block,update_id)
@@ -167,8 +205,8 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
         self.link_parent_stmts_to_current_stmt(last_stmts_of_update,last_stmts_of_condition_body[0])
 
         
-        boundary = self.boundary_of_multi_blocks(condition_body, [condition_id])
-        return (last_stmts_of_else, boundary)
+        boundary = self.boundary_of_multi_blocks(current_block, [condition_id,update_id,body_id])
+        return (last_stmts_of_else + breaks, boundary)
 
     def analyze_try_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
         self.link_parent_stmts_to_current_stmt(parent_stmts,current_stmt)
@@ -208,7 +246,7 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
                     if len(final_stmt_body)!=0:
                         last_stmts_of_final_body = self.analyze_block(final_stmt_body,last_stmts_of_final_body,global_special_stmts)
 
-        boundary = self.boundary_of_multi_blocks(current_block,[final_body_id])
+        boundary = self.boundary_of_multi_blocks(current_block,[final_body_id,catch_body_id,try_body_id])
     
         
         return (last_stmts_of_final_body,boundary)
@@ -223,10 +261,16 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
         return ([], -1)
 
     def analyze_break_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
-        return ([], -1)
+        global_special_stmts.append(["break", current_stmt])
+        self.link_parent_stmts_to_current_stmt(parent_stmts, current_stmt)
+        boundary = self.boundary_of_multi_blocks(current_block, [current_stmt.stmt_id])
+        return ([current_stmt], boundary)
 
     def analyze_continue_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
-        return ([], -1)
+        global_special_stmts.append(["continue", current_stmt])
+        self.link_parent_stmts_to_current_stmt(parent_stmts, current_stmt)
+        boundary = self.boundary_of_multi_blocks(current_block, [current_stmt.stmt_id])
+        return ([current_stmt], boundary)
 
     def analyze_yield_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
         return ([], -1)
