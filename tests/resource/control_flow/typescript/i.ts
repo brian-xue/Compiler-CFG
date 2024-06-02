@@ -4,30 +4,29 @@ function f(){
     let i = 0;
 
     if (counter < max) {
-        counter++;
+        counter = counter+1;
     } else {
         counter = 1;
         console.log(counter);
     }
     
-    for(i =0; i< 10; i++)
-        {
-            console.log(i);
-            // continue;
-        }
+    // for(i =0; i< 10; i++)
+    //     {
+    //         console.log(i);
+    //         // continue;
+    //     }
 
 
-    while(i<5){
-        i++;
-    }
-    
-    
+    // while(i<5){
+    //     i++;
+    //     break;
+    // }
 
-    try {
-        i+1;
-    } catch (e: any) {
-        i-1;
-    } finally {
-       i=1;
-    }
+    // try {
+    //     i+1;
+    // } catch (e: any) {
+    //     i-1;
+    // } finally {
+    //    i=1;
+    // }
 }

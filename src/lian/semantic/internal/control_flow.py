@@ -30,7 +30,7 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
             "continue_stmt" : self.analyze_continue_stmt,
             "try_stmt"      : self.analyze_try_stmt,
             "return_stmt"   : self.analyze_return_stmt,
-            "yield"         : self.analyze_yield_stmt,
+            "yield_stmt"    : self.analyze_yield_stmt,
             "method_decl"   : self.analyze_method_decl_stmt,
             "class_decl"    : self.analyze_decl_stmt,
             "record_decl"   : self.analyze_decl_stmt,
@@ -258,7 +258,9 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
         return ([], -1)
 
     def analyze_return_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
-        return ([], -1)
+        self.link_parent_stmts_to_current_stmt(parent_stmts, current_stmt)
+        self.cfg.add_edge([current_stmt], -1)
+        return ([],-1)
 
     def analyze_break_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
         global_special_stmts.append(["break", current_stmt])
@@ -273,7 +275,9 @@ class ControlFlowAnalysis(InternalAnalysisTemplate):
         return ([current_stmt], boundary)
 
     def analyze_yield_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
-        return ([], -1)
+        self.link_parent_stmts_to_current_stmt(parent_stmts, current_stmt)
+        self.cfg.add_edge([current_stmt], -1)
+        return ([],-1)
 
     def analyze_if_stmt(self, current_block, current_stmt, parent_stmts, global_special_stmts):
         self.link_parent_stmts_to_current_stmt(parent_stmts, current_stmt)
